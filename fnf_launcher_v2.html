@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNF Mod Launcher</title>
+    <style>
+        /* --- CSS STYLING (UNCHANGED) --- */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Header Style */
+        header {
+            background: linear-gradient(90deg, #ff00cc, #333399);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px #000;
+        }
+
+        /* The Grid Container */
+        .mod-grid {
+            display: grid;
+            /* Auto-fill columns (responsive) */
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Individual Mod Card */
+        .mod-card {
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+        }
+
+        .mod-card:hover {
+            transform: scale(1.05);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .mod-image {
+            width: 100%;
+            height: 150px;
+            background-color: #333;
+            object-fit: cover;
+            display: block;
+        }
+
+        .mod-title {
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- THE GAME OVERLAY (Pop-up) --- */
+        #game-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* The Toolbar above the game */
+        .overlay-toolbar {
+            width: 90%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #222;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .close-btn {
+            background-color: #ff3333;
+            color: white;
+        }
+        .close-btn:hover { background-color: #cc0000; }
+
+        /* Added for strict networks */
+        .popout-btn {
+            background-color: #333399;
+            color: white;
+        }
+        .popout-btn:hover { background-color: #4444aa; }
+
+        /* The Iframe Container */
+        .iframe-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 80%; /* Takes up 80% of screen height */
+            background: #000;
+            border: 2px solid #333;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>FNF Mod Archive</h1>
+        <p style="margin:5px 0 0 0; font-size: 0.8em;">Select a mod to play | Unblocked Mode</p>
+    </header>
+
+    <div class="mod-grid" id="gridContainer"></div>
+
+    <div id="game-overlay">
+        <div class="overlay-toolbar">
+            <span id="current-game-title" style="font-weight: bold; color: #00ffff;">Playing: Mod Name</span>
+            <div class="btn-group">
+                <button class="action-btn popout-btn" onclick="openNewTab()">Server 2 (New Tab)</button>
+                <button class="action-btn close-btn" onclick="closeGame()">EXIT GAME</button>
+            </div>
+        </div>
+        <div class="iframe-container">
+            <iframe id="game-frame" src="" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        // --- YOUR MOD LIST ---
+        // I have added 20 of the links you sent. 
+        // I used generated images with text so you can tell them apart easily without downloading 20 images.
+
+        const modList = [
+            { 
+                title: "Friday Night Funkin' (Original)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/0281/index.html", 
+                img: "https://placehold.co/300x200/333/ff00cc?text=ORIGINAL+FNF" 
+            },
+            { 
+                title: "Vs Whitty (Definitive)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/whitty20/index.html", 
+                img: "https://placehold.co/300x200/111/00ffff?text=VS+WHITTY" 
+            },
+            { 
+                title: "Mid-Fight Masses", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/midfight13/index.html", 
+                img: "https://placehold.co/300x200/550055/fff?text=MID-FIGHT" 
+            },
+            { 
+                title: "Vs Tricky", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/tricky23/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=TRICKY" 
+            },
+            { 
+                title: "Vs Garcello", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/garcello02/index.html", 
+                img: "https://placehold.co/300x200/00aa55/fff?text=GARCELLO" 
+            },
+            { 
+                title: "Vs Imposter V4", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/impostor07/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=IMPOSTER" 
+            },
+            { 
+                title: "Miku 2.0", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/miku21/index.html", 
+                img: "https://placehold.co/300x200/00aaaa/fff?text=MIKU+2.0" 
+            },
+            { 
+                title: "Indie Cross V1", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/indiecross29/index.html", 
+                img: "https://placehold.co/300x200/222/fff?text=INDIE+CROSS" 
+            },
+            { 
+                title: "Sonic.exe 2.0", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/sonicexe26/index.html", 
+                img: "https://placehold.co/300x200/0000aa/fff?text=SONIC.EXE" 
+            },
+            { 
+                title: "Huggy Wuggy", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/huggy03/index.html", 
+                img: "https://placehold.co/300x200/0033aa/fff?text=HUGGY+WUGGY" 
+            },
+            { 
+                title: "FNAF Mod", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/fnaf01/index.html", 
+                img: "https://placehold.co/300x200/553300/fff?text=FNAF" 
+            },
+            { 
+                title: "Mario's Madness", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/mario-madness01/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=MARIO+MADNESS" 
+            },
+            { 
+                title: "Pibby Corrupted", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/pibby02/index.html", 
+                img: "https://placehold.co/300x200/000/00ff00?text=PIBBY" 
+            },
+            { 
+                title: "Blueballs Incident", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/blueballs/index.html", 
+                img: "https://placehold.co/300x200/333/00aaff?text=BLUEBALLS" 
+            },
+            { 
+                title: "Vs Tord", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/tord01/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=TORD" 
+            },
+            { 
+                title: "Vs Hex Update", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/hex21/index.html", 
+                img: "https://placehold.co/300x200/333/orange?text=HEX" 
+            },
+            { 
+                title: "Vs Sky v2", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/sky02/index.html", 
+                img: "https://placehold.co/300x200/87CEEB/fff?text=SKY" 
+            },
+            { 
+                title: "Vs Tabi", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/tabi03/index.html", 
+                img: "https://placehold.co/300x200/222/fff?text=TABI" 
+            },
+            { 
+                title: "RetroSpecter", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/retrospecter03/index.html", 
+                img: "https://placehold.co/300x200/00ffff/000?text=RETROSPECTER" 
+            },
+            { 
+                title: "The Date", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/dateweek01/index.html", 
+                img: "https://placehold.co/300x200/ff69b4/fff?text=THE+DATE" 
+            }
+        ];
+
+        // --- RENDER THE GRID ---
+        const grid = document.getElementById('gridContainer');
+
+        modList.forEach(mod => {
+            const card = document.createElement('div');
+            card.className = 'mod-card';
+            card.onclick = () => launchGame(mod.title, mod.url);
+
+            const img = document.createElement('img');
+            img.className = 'mod-image';
+            img.src = mod.img;
+            img.alt = mod.title;
+            // Fallback if image fails
+            img.onerror = function() {
+                this.style.display='none';
+                card.innerHTML += '<div style="height:150px; display:flex; align-items:center; justify-content:center;">FNF</div>';
+            };
+
+            const title = document.createElement('div');
+            title.className = 'mod-title';
+            title.innerText = mod.title;
+
+            card.appendChild(img);
+            card.appendChild(title);
+            grid.appendChild(card);
+        });
+
+        // --- GAME LAUNCHER LOGIC ---
+        const overlay = document.getElementById('game-overlay');
+        const frame = document.getElementById('game-frame');
+        const label = document.getElementById('current-game-title');
+        let currentUrl = ""; // Store URL for the "New Tab" feature
+
+        function launchGame(title, url) {
+            currentUrl = url;
+            frame.src = url;
+            label.innerText = "Playing: " + title;
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGame() {
+            frame.src = '';
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            currentUrl = "";
+        }
+
+        // New feature for Strict Networks:
+        function openNewTab() {
+            if(currentUrl) {
+                window.open(currentUrl, '_blank');
+            }
+        }
+    </script>
+</body>
+</html>

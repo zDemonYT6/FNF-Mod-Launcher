@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNF Mod Launcher - V3</title>
+    <style>
+        /* CSS stays exactly the same as the GUI you liked */
+        body { margin: 0; padding: 0; background-color: #111; color: #fff; font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+        header { background: linear-gradient(90deg, #ff00cc, #333399); padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 10; }
+        h1 { margin: 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px #000; }
+        .mod-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 30px; max-width: 1200px; margin: 0 auto; }
+        .mod-card { background: #222; border: 2px solid #444; border-radius: 10px; overflow: hidden; cursor: pointer; transition: transform 0.2s, border-color 0.2s; position: relative; }
+        .mod-card:hover { transform: scale(1.05); border-color: #00ffff; box-shadow: 0 0 15px #00ffff; }
+        .mod-image { width: 100%; height: 150px; background-color: #333; object-fit: cover; display: block; }
+        .mod-title { padding: 10px; text-align: center; font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #game-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
+        .overlay-toolbar { width: 90%; max-width: 1000px; display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #222; border-radius: 10px 10px 0 0; }
+        .btn-group { display: flex; gap: 10px; }
+        .action-btn { border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 0.9rem; }
+        .close-btn { background-color: #ff3333; color: white; }
+        .popout-btn { background-color: #333399; color: white; }
+        .iframe-container { width: 90%; max-width: 1000px; height: 80%; background: #000; border: 2px solid #333; }
+        iframe { width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>FNF Mod Archive</h1>
+        <p style="margin:5px 0 0 0; font-size: 0.8em;">Stable 2025 Update | v3.0</p>
+    </header>
+
+    <div class="mod-grid" id="gridContainer"></div>
+
+    <div id="game-overlay">
+        <div class="overlay-toolbar">
+            <span id="current-game-title" style="font-weight: bold; color: #00ffff;">Loading...</span>
+            <div class="btn-group">
+                <button class="action-btn popout-btn" onclick="openNewTab()">Server 2 (New Tab)</button>
+                <button class="action-btn close-btn" onclick="closeGame()">EXIT</button>
+            </div>
+        </div>
+        <div class="iframe-container">
+            <iframe id="game-frame" src="" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        const modList = [
+            { 
+                title: "FNF Original (v0.2.8)", 
+                url: "https://ninja-muffin24.itch.io/funkin", // Using official Itch link
+                img: "https://placehold.co/300x200/333/ff00cc?text=ORIGINAL+FNF" 
+            },
+            { 
+                title: "Vs Whitty (Remastered)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/whitty20/index.html", 
+                img: "https://placehold.co/300x200/111/00ffff?text=VS+WHITTY" 
+            },
+            { 
+                title: "Indie Cross (Stable)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/indiecross29/index.html", 
+                img: "https://placehold.co/300x200/222/fff?text=INDIE+CROSS" 
+            },
+            { 
+                title: "Sonic.EXE 3.0 (Working)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/sonicchoice.html?220822", 
+                img: "https://placehold.co/300x200/0000aa/fff?text=SONIC.EXE" 
+            },
+            { 
+                title: "Corruption (2025 Demo)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/corruption-takeover01/index2.html", 
+                img: "https://placehold.co/300x200/000/00ff00?text=CORRUPTION" 
+            },
+            { 
+                title: "Mid-Fight Masses (Deluxe)", 
+                url: "https://fnf.kdata1.com/mid-fight-masses-deluxe-edition/1/", 
+                img: "https://placehold.co/300x200/550055/fff?text=MID-FIGHT" 
+            },
+            { 
+                title: "Tricky V2 (The Full Week)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/tricky23/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=TRICKY" 
+            },
+            { 
+                title: "Tails Gets Trolled (2025 Update)", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/tailstrolled03/index.html", 
+                img: "https://placehold.co/300x200/444/fff?text=TAILS+TROLL" 
+            },
+            { 
+                title: "Imposter V4", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/impostor07/index.html", 
+                img: "https://placehold.co/300x200/aa0000/fff?text=IMPOSTER" 
+            },
+            { 
+                title: "Hypno's Lullaby V2", 
+                url: "https://w8.snokido.com/games/html5/friday-night-funkin/lullaby01/index.html", 
+                img: "https://placehold.co/300x200/222/fff?text=HYPNO" 
+            }
+        ];
+
+        const grid = document.getElementById('gridContainer');
+        const overlay = document.getElementById('game-overlay');
+        const frame = document.getElementById('game-frame');
+        const label = document.getElementById('current-game-title');
+        let currentUrl = "";
+
+        modList.forEach(mod => {
+            const card = document.createElement('div');
+            card.className = 'mod-card';
+            card.onclick = () => launchGame(mod.title, mod.url);
+            const img = document.createElement('img');
+            img.className = 'mod-image';
+            img.src = mod.img;
+            const title = document.createElement('div');
+            title.className = 'mod-title';
+            title.innerText = mod.title;
+            card.appendChild(img);
+            card.appendChild(title);
+            grid.appendChild(card);
+        });
+
+        function launchGame(title, url) {
+            currentUrl = url;
+            frame.src = url;
+            label.innerText = "Playing: " + title;
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGame() {
+            frame.src = '';
+            overlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function openNewTab() {
+            if(currentUrl) window.open(currentUrl, '_blank');
+        }
+    </script>
+</body>
+</html>
